@@ -3,17 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>Prompt Arena Retro</title>
-  <!-- Google Fonts: Press Start 2P -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* General Reset (opcional) */
+    /* [Mantener todos los estilos existentes] */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    /* Contenedor principal */
     .container {
       width: 80%;
       margin: 2rem auto;
@@ -21,11 +19,10 @@
       padding: 2rem;
       border: 2px solid #c77fdf;
       box-shadow: 0 0 10px #c77fdf;
-      font-family: 'Press Start 2P', monospace; /* Fuente retro */
+      font-family: 'Press Start 2P', monospace;
       color: #c77fdf;
     }
 
-    /* Encabezado retro */
     .header {
       text-align: center;
       margin-bottom: 2rem;
@@ -37,7 +34,6 @@
       text-shadow: 0 0 5px #c77fdf;
     }
 
-    /* Navbar */
     .navbar ul {
       list-style: none;
       display: flex;
@@ -60,7 +56,6 @@
       background: #333;
     }
 
-    /* Secciones (pestañas) */
     .tab-content {
       display: none;
     }
@@ -69,13 +64,12 @@
       display: block;
     }
 
-    /* Formulario */
     form {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       width: 100%;
-      max-width: 800px; /* Doblamos el ancho de 400px a 800px */
+      max-width: 800px;
       margin: 0 auto;
     }
 
@@ -84,10 +78,6 @@
       font-size: 1rem;
     }
 
-    /* Ajustamos el tamaño de los textareas:
-       - Prompt: 8 filas
-       - Respuesta: 16 filas
-       - Ahora les damos width: 100% para que ocupen todo el ancho del form */
     #prompt {
       rows: 8;
       width: 100%;
@@ -107,12 +97,11 @@
       font-family: inherit;
     }
 
-    /* Textarea no editable para la respuesta */
     #assistantReply:disabled {
       background: #222 !important;
       color: #c77fdf !important;
       border: 1px solid #c77fdf !important;
-      opacity: 1; /* Para que no se vea atenuado */
+      opacity: 1;
     }
 
     form button {
@@ -132,7 +121,6 @@
       color: #000;
     }
 
-    /* Leaderboard */
     .leaderboard-table {
       width: 80%;
       margin: 1rem auto;
@@ -147,7 +135,6 @@
       padding: 0.5rem;
     }
 
-    /* Spinner para mostrar carga */
     .spinner {
       display: inline-block;
       margin-left: 8px;
@@ -164,8 +151,7 @@
         transform: rotate(360deg);
       }
     }
-  </style>
-  <style>
+
     body {
       background: black !important;
     }
@@ -221,15 +207,11 @@
   </style>
 </head>
 <body>
-  <!-- Contenedor principal -->
   <div class="container">
-
-    <!-- Encabezado con estilo retro -->
     <header class="header">
       <h1>PROMPT ARENA</h1>
     </header>
 
-    <!-- Barra de navegación de pestañas -->
     <nav class="navbar">
       <ul>
         <li class="active" data-tab="tab-inicio">Inicio</li>
@@ -237,7 +219,6 @@
       </ul>
     </nav>
 
-    <!-- Contenido de la pestaña "Inicio" -->
     <section id="tab-inicio" class="tab-content active">
       <h2>Bienvenido</h2>
       <form id="promptForm">
@@ -254,11 +235,9 @@
       </form>
     </section>
 
-    <!-- Contenido de la pestaña "Leaderboard" -->
     <section id="tab-leaderboard" class="tab-content">
       <h2>Leaderboard</h2>
       <p>Aquí puedes ver tu puntuación si estás en el TOP100!</p>
-      <!-- Tabla vacía, la llenaremos dinámicamente con datos de Google Sheets -->
       <table class="leaderboard-table">
         <thead>
           <tr>
@@ -268,27 +247,20 @@
           </tr>
         </thead>
         <tbody id="leaderboardTableBody">
-          <!-- Rellenado dinámicamente con JavaScript -->
         </tbody>
       </table>
     </section>
-
   </div>
 
-  <!-- Script para la lógica de pestañas -->
   <script>
-    // Selección de elementos del DOM
     const tabButtons = document.querySelectorAll('.navbar li');
     const tabContents = document.querySelectorAll('.tab-content');
-
     const promptForm = document.getElementById('promptForm');
     const assistantReply = document.getElementById('assistantReply');
     const startButton = document.getElementById('startButton');
 
-    // URL del webhook de Make para enviar prompts
+    // URL del webhook de n8n
     const makeWebhookUrl = "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in";
-
-    // URL CSV "forzada" para tu Google Sheet (nombre, puntuación)
     const publishedCsvUrl = "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0";
 
     // Manejo de pestañas
@@ -311,51 +283,73 @@
       });
     });
 
-    // Evento de Submit del formulario
-    promptForm.addEventListener('submit', (e) => {
+    // Submit del formulario CON LOGGING DETALLADO
+    promptForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const username = document.getElementById('username').value.trim();
       const prompt = document.getElementById('prompt').value.trim();
+
+      console.log('=== INICIO DE ENVÍO ===');
+      console.log('Username:', username);
+      console.log('Prompt:', prompt);
+      console.log('URL:', makeWebhookUrl);
 
       if (!username || !prompt) {
         assistantReply.value = "Debes rellenar todos los campos.";
         return;
       }
 
-      // Bloqueamos el botón y añadimos spinner
       startButton.disabled = true;
       startButton.innerHTML = "Espere... <span class='spinner'></span>";
-
       assistantReply.value = "Procesando tu prompt...";
 
-      fetch(makeWebhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, prompt }),
-      })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("Error al enviar datos a Make.");
-          }
-          return response.text();
-        })
-        .then(text => {
-          assistantReply.value = text;
-        })
-        .catch(error => {
-          assistantReply.value = "Error de red: " + error.message;
-          console.error(error);
-        })
-        .finally(() => {
-          // Volvemos a habilitar el botón y su texto
-          startButton.disabled = false;
-          startButton.textContent = "Empezar";
+      const payload = { 
+        username: username, 
+        prompt: prompt 
+      };
+      
+      console.log('Payload a enviar:', JSON.stringify(payload, null, 2));
+
+      try {
+        console.log('Iniciando fetch...');
+        
+        const response = await fetch(makeWebhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         });
+
+        console.log('Response status:', response.status);
+        console.log('Response statusText:', response.statusText);
+        console.log('Response headers:', [...response.headers.entries()]);
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+        }
+
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        assistantReply.value = responseText || "Respuesta recibida pero vacía";
+
+      } catch (error) {
+        console.error('=== ERROR COMPLETO ===');
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        assistantReply.value = `Error: ${error.message}`;
+      } finally {
+        startButton.disabled = false;
+        startButton.textContent = "Empezar";
+        console.log('=== FIN DE ENVÍO ===');
+      }
     });
 
-    // Función para cargar datos del Leaderboard y mostrarlos en la tabla
+    // Función para cargar leaderboard
     function loadLeaderboardData() {
       const leaderboardBody = document.getElementById('leaderboardTableBody');
       leaderboardBody.innerHTML = "";
@@ -369,12 +363,11 @@
         })
         .then(csvText => {
           const lines = csvText.trim().split("\n");
-
           const records = [];
+          
           for (let i = 1; i < lines.length; i++) {
             const rowData = lines[i].split(",");
             const puntos = parseInt(rowData[1], 10) || 0;
-
             records.push({
               nombre: rowData[0],
               puntuacion: puntos
@@ -382,13 +375,11 @@
           }
 
           records.sort((a, b) => b.puntuacion - a.puntuacion);
-
-          // Solo top 100
           const topRecords = records.slice(0, 100);
 
           topRecords.forEach((item, index) => {
             const row = document.createElement('tr');
-
+            
             const posCell = document.createElement('td');
             posCell.textContent = index + 1;
             row.appendChild(posCell);
@@ -414,7 +405,6 @@
           leaderboardBody.appendChild(errorRow);
         });
     }
-
   </script>
 </body>
 </html>
