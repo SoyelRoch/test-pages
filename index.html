@@ -2,17 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Prompt Arena Retro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Arena</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: black !important; }
+    
     .container {
       width: 80%; margin: 2rem auto; background: #111; padding: 2rem;
       border: 2px solid #c77fdf; box-shadow: 0 0 10px #c77fdf;
       font-family: 'Press Start 2P', monospace; color: #c77fdf;
     }
+    
     .header { text-align: center; margin-bottom: 2rem; }
     .header h1 { font-size: 2.5rem; color: #c77fdf; text-shadow: 0 0 5px #c77fdf; }
+    
     .navbar ul {
       list-style: none; display: flex; justify-content: center;
       margin-bottom: 2rem; border-bottom: 2px dashed #c77fdf;
@@ -22,8 +27,10 @@
     }
     .navbar li:hover { background: #222; }
     .navbar li.active { background: #333; }
+    
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+    
     form {
       display: flex; flex-direction: column; gap: 1rem;
       width: 100%; max-width: 800px; margin: 0 auto;
@@ -31,14 +38,18 @@
     form label { font-weight: bold; font-size: 1rem; }
     #prompt { rows: 8; width: 100%; }
     #assistantReply { rows: 16; width: 100%; }
+    
     form input[type="text"], form textarea {
       background: #222; color: #c77fdf; border: 1px solid #c77fdf;
-      padding: 0.5rem; font-family: inherit;
+      padding: 0.5rem; font-family: inherit; font-size: 0.9rem;
+      line-height: 1.5;
     }
+    
     #assistantReply:disabled {
       background: #222 !important; color: #c77fdf !important;
       border: 1px solid #c77fdf !important; opacity: 1;
     }
+    
     form button {
       background: #c77fdf; color: #111; border: none;
       padding: 0.75rem; cursor: pointer; font-family: inherit;
@@ -47,6 +58,7 @@
     }
     form button:hover { background: #fff; color: #000; }
     form button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
     .leaderboard-table {
       width: 80%; margin: 1rem auto; border-collapse: collapse;
       color: #fff; text-align: center;
@@ -54,6 +66,7 @@
     .leaderboard-table th, .leaderboard-table td {
       border: 1px solid #c77fdf; padding: 0.5rem;
     }
+    
     .spinner {
       display: inline-block; margin-left: 8px;
       width: 14px; height: 14px; border: 2px solid #111;
@@ -61,10 +74,11 @@
       animation: spin 0.8s linear infinite; vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    body { background: black !important; }
-    p { font-family: Poppins !important; }
+    
+    p { font-family: Poppins, Arial, sans-serif !important; }
+    
     @media (max-width: 768px) {
-      #assistantReply:disabled, #prompt{ line-height: 1.5; }
+      #assistantReply:disabled, #prompt { line-height: 1.5; }
       .navbar { flex-direction: column; align-items: flex-start; display: flex; }
       .navbar ul { display: block !important; width: 100%; text-align: center !important; }
       .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody,
@@ -126,8 +140,20 @@
   </div>
 
   <script>
-    const BACKEND_URL = "http://193.31.31.58:25750";
+    // ========================================
+    // CONFIGURACIÓN
+    // ========================================
+    
+    const N8N_WEBHOOK = "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/1aa1195d-8a21-4bc2-8458-84831f03b376";
+    
+    // URL del CSV público de Google Sheets
+    // Formato: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv&gid=0
+    const GOOGLE_SHEETS_CSV = "https://docs.google.com/spreadsheets/d/TU_SPREADSHEET_ID/export?format=csv&gid=0";
 
+    // ========================================
+    // NAVEGACIÓN ENTRE TABS
+    // ========================================
+    
     const tabButtons = document.querySelectorAll('.navbar li');
     const tabContents = document.querySelectorAll('.tab-content');
     const promptForm = document.getElementById('promptForm');
@@ -147,6 +173,10 @@
       });
     });
 
+    // ========================================
+    // ENVÍO DE PROMPT AL WEBHOOK DE N8N
+    // ========================================
+    
     promptForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value.trim();
@@ -159,30 +189,39 @@
 
       startButton.disabled = true;
       startButton.innerHTML = "Procesando... <span class='spinner'></span>";
-      assistantReply.value = "⏳ Enviando tu prompt al Assistant de OpenAI...";
+      assistantReply.value = "⏳ Enviando tu prompt a N8N para evaluación...";
 
       try {
-        console.log('📤 Enviando prompt al backend...');
-        const response = await fetch(`${BACKEND_URL}/api/process-prompt`, {
+        console.log('📤 Enviando prompt al webhook de N8N...');
+        const response = await fetch(N8N_WEBHOOK, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt, username })
         });
 
         const data = await response.json();
-        if (!response.ok || !data.success) {
+        
+        if (!response.ok) {
           throw new Error(data.error || 'Error del servidor');
         }
 
-        console.log('✅ Respuesta recibida del backend');
-        let message = data.response;
+        console.log('✅ Respuesta recibida de N8N:', data);
         
+        // Mostrar la respuesta del evaluador
+        let message = data.response || data.message || 'Respuesta procesada';
+        
+        // Si hay información de actualización de BD
         if (data.dbUpdate) {
           if (data.dbUpdate.updated) {
             message += `\n\n✅ ${data.dbUpdate.message}`;
           } else {
             message += `\n\nℹ️ ${data.dbUpdate.message}`;
           }
+        }
+        
+        // Si hay score
+        if (data.score !== undefined && data.score !== null) {
+          message += `\n\n📊 Puntuación: ${data.score}/100`;
         }
         
         assistantReply.value = message;
@@ -196,26 +235,60 @@
       }
     });
 
+    // ========================================
+    // CARGAR LEADERBOARD DESDE GOOGLE SHEETS CSV
+    // ========================================
+    
     async function loadLeaderboardData() {
       const leaderboardBody = document.getElementById('leaderboardTableBody');
       leaderboardBody.innerHTML = "<tr><td colspan='3'>Cargando...</td></tr>";
 
       try {
-        const response = await fetch(`${BACKEND_URL}/api/leaderboard?limit=100`);
-        const data = await response.json();
+        console.log('📊 Cargando leaderboard desde Google Sheets...');
         
-        if (!response.ok || !data.success) {
-          throw new Error('Error cargando leaderboard');
+        const response = await fetch(GOOGLE_SHEETS_CSV);
+        
+        if (!response.ok) {
+          throw new Error('Error cargando el CSV');
         }
-
+        
+        const csvText = await response.text();
+        
+        // Parsear CSV manualmente (simple)
+        const lines = csvText.split('\n');
+        const data = [];
+        
+        // Saltar la primera línea (headers)
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          // Dividir por comas (asumiendo formato: username,score)
+          const parts = line.split(',');
+          if (parts.length >= 2) {
+            const username = parts[0].trim();
+            const score = parseInt(parts[1].trim(), 10);
+            
+            if (username && !isNaN(score)) {
+              data.push({ username, score });
+            }
+          }
+        }
+        
+        // Ordenar por score descendente
+        data.sort((a, b) => b.score - a.score);
+        
+        // Limitar a top 100
+        const top100 = data.slice(0, 100);
+        
         leaderboardBody.innerHTML = "";
 
-        if (data.data.length === 0) {
+        if (top100.length === 0) {
           leaderboardBody.innerHTML = "<tr><td colspan='3'>No hay datos disponibles</td></tr>";
           return;
         }
 
-        data.data.forEach((item, index) => {
+        top100.forEach((item, index) => {
           const row = document.createElement('tr');
           
           const posCell = document.createElement('td');
@@ -233,13 +306,16 @@
           leaderboardBody.appendChild(row);
         });
 
+        console.log(`✅ Leaderboard cargado: ${top100.length} usuarios`);
+
       } catch (error) {
-        console.error(error);
+        console.error('❌ Error cargando leaderboard:', error);
         leaderboardBody.innerHTML = "<tr><td colspan='3'>Error al cargar el leaderboard</td></tr>";
       }
     }
 
-    console.log('🚀 Prompt Arena inicializado');
+    console.log('🚀 Prompt Arena inicializado con N8N');
+    console.log('📡 Webhook:', N8N_WEBHOOK);
   </script>
 </body>
 </html>
