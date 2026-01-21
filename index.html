@@ -5,7 +5,6 @@
   <title>Prompt Arena Retro</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* [Mantener todos los estilos existentes] */
     * {
       margin: 0;
       padding: 0;
@@ -121,6 +120,11 @@
       color: #000;
     }
 
+    form button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .leaderboard-table {
       width: 80%;
       margin: 1rem auto;
@@ -146,18 +150,42 @@
       animation: spin 0.8s linear infinite;
       vertical-align: middle;
     }
+    
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
     }
 
+    .char-counter {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: -0.5rem;
+    }
+
+    .char-counter.warning {
+      color: #ff9800;
+    }
+
+    .char-counter.error {
+      color: #f44336;
+    }
+
+    .error-message {
+      color: #f44336;
+      font-size: 0.9rem;
+      margin-top: -0.5rem;
+    }
+
     body {
       background: black !important;
     }
+    
     p {
       font-family: Poppins !important;
     }
+    
     @media (max-width: 768px) {
       #assistantReply:disabled, #prompt{
         line-height: 1.5;
@@ -173,6 +201,7 @@
         text-align: center !important;
       }
     }
+    
     @media (max-width: 768px) {
       .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table th, .leaderboard-table td {
         display: block;
@@ -222,16 +251,20 @@
     <section id="tab-inicio" class="tab-content active">
       <h2>Bienvenido</h2>
       <form id="promptForm">
-        <label for="username">Nombre de Usuario</label>
-        <input type="text" id="username" name="username" required>
+        <label for="username">Nombre de Usuario (máx. 50 caracteres)</label>
+        <input type="text" id="username" name="username" maxlength="50" required>
+        <div id="usernameError" class="error-message" style="display: none;"></div>
 
-        <label for="prompt">Prompt</label>
+        <label for="prompt">Prompt (10-2000 caracteres)</label>
         <textarea id="prompt" name="prompt" rows="8" required></textarea>
+        <div class="char-counter" id="charCounter">0 / 2000</div>
+        <div id="promptError" class="error-message" style="display: none;"></div>
 
         <label for="assistantReply">Respuesta</label>
         <textarea id="assistantReply" name="assistantReply" rows="16" disabled>Aquí aparecerá la valoración de tu prompt</textarea>
 
         <button type="submit" id="startButton">Empezar</button>
+        <div id="rateLimitInfo" style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #888;"></div>
       </form>
     </section>
 
@@ -253,17 +286,171 @@
   </div>
 
   <script>
+    // ========================================
+    // CONFIGURACIÓN
+    // ========================================
+    const CONFIG = {
+      makeWebhookUrl: "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in",
+      publishedCsvUrl: "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0",
+      secretToken: "a7f3e9d2c8b6f1a4e7d9c2b8f5a1e6d3c9b7f2a5e8d1c6b9f3a7e2d5c8b1f4a6e9d3c7b2f5a8e1d4c9b6f2a7e3d8c5b1f9a4e7d2c6b8f3a5e9d1c7b4f2a6e8d3c9",
+      maxPromptLength: 2000,
+      minPromptLength: 10,
+      maxUsernameLength: 50,
+      rateLimitWindow: 300000, // 5 minutos en ms
+      maxAttemptsPerWindow: 3,
+      requestTimeout: 30000 // 30 segundos
+    };
+
+    // ========================================
+    // ELEMENTOS DEL DOM
+    // ========================================
     const tabButtons = document.querySelectorAll('.navbar li');
     const tabContents = document.querySelectorAll('.tab-content');
     const promptForm = document.getElementById('promptForm');
+    const usernameInput = document.getElementById('username');
+    const promptInput = document.getElementById('prompt');
     const assistantReply = document.getElementById('assistantReply');
     const startButton = document.getElementById('startButton');
+    const charCounter = document.getElementById('charCounter');
+    const usernameError = document.getElementById('usernameError');
+    const promptError = document.getElementById('promptError');
+    const rateLimitInfo = document.getElementById('rateLimitInfo');
 
-    // URL del webhook de n8n
-    const makeWebhookUrl = "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in";
-    const publishedCsvUrl = "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0";
+    // ========================================
+    // RATE LIMITER
+    // ========================================
+    const rateLimiter = {
+      attempts: JSON.parse(localStorage.getItem('rateLimiterAttempts') || '{}'),
+      
+      saveToStorage() {
+        localStorage.setItem('rateLimiterAttempts', JSON.stringify(this.attempts));
+      },
+      
+      check(username) {
+        const now = Date.now();
+        const key = username.toLowerCase();
+        
+        if (!this.attempts[key]) {
+          this.attempts[key] = [];
+        }
+        
+        // Limpiar intentos antiguos
+        this.attempts[key] = this.attempts[key].filter(
+          time => now - time < CONFIG.rateLimitWindow
+        );
+        
+        // Verificar límite
+        if (this.attempts[key].length >= CONFIG.maxAttemptsPerWindow) {
+          const oldestAttempt = Math.min(...this.attempts[key]);
+          const timeUntilReset = CONFIG.rateLimitWindow - (now - oldestAttempt);
+          const minutesLeft = Math.ceil(timeUntilReset / 60000);
+          return { 
+            allowed: false, 
+            minutesLeft: minutesLeft 
+          };
+        }
+        
+        // Registrar intento
+        this.attempts[key].push(now);
+        this.saveToStorage();
+        
+        const remainingAttempts = CONFIG.maxAttemptsPerWindow - this.attempts[key].length;
+        return { 
+          allowed: true, 
+          remainingAttempts: remainingAttempts 
+        };
+      },
+      
+      getRemainingAttempts(username) {
+        const key = username.toLowerCase();
+        const now = Date.now();
+        
+        if (!this.attempts[key]) {
+          return CONFIG.maxAttemptsPerWindow;
+        }
+        
+        // Limpiar intentos antiguos
+        this.attempts[key] = this.attempts[key].filter(
+          time => now - time < CONFIG.rateLimitWindow
+        );
+        
+        return Math.max(0, CONFIG.maxAttemptsPerWindow - this.attempts[key].length);
+      }
+    };
 
-    // Manejo de pestañas
+    // ========================================
+    // SANITIZACIÓN
+    // ========================================
+    function sanitizeInput(input) {
+      // Remover HTML tags
+      let sanitized = input.replace(/<[^>]*>/g, '');
+      // Remover caracteres de control
+      sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+      return sanitized.trim();
+    }
+
+    // ========================================
+    // VALIDACIÓN
+    // ========================================
+    function validateUsername(username) {
+      if (!username || username.length === 0) {
+        return { valid: false, error: "El nombre de usuario es obligatorio" };
+      }
+      if (username.length > CONFIG.maxUsernameLength) {
+        return { valid: false, error: `El nombre es demasiado largo (máx ${CONFIG.maxUsernameLength} caracteres)` };
+      }
+      if (!/^[a-zA-Z0-9_\-\sáéíóúñÁÉÍÓÚÑ]+$/.test(username)) {
+        return { valid: false, error: "El nombre solo puede contener letras, números, guiones y espacios" };
+      }
+      return { valid: true };
+    }
+
+    function validatePrompt(prompt) {
+      if (!prompt || prompt.length === 0) {
+        return { valid: false, error: "El prompt es obligatorio" };
+      }
+      if (prompt.length < CONFIG.minPromptLength) {
+        return { valid: false, error: `El prompt debe tener al menos ${CONFIG.minPromptLength} caracteres` };
+      }
+      if (prompt.length > CONFIG.maxPromptLength) {
+        return { valid: false, error: `El prompt es demasiado largo (máx ${CONFIG.maxPromptLength} caracteres)` };
+      }
+      return { valid: true };
+    }
+
+    // ========================================
+    // CONTADOR DE CARACTERES
+    // ========================================
+    promptInput.addEventListener('input', () => {
+      const length = promptInput.value.length;
+      charCounter.textContent = `${length} / ${CONFIG.maxPromptLength}`;
+      
+      if (length > CONFIG.maxPromptLength) {
+        charCounter.classList.add('error');
+        charCounter.classList.remove('warning');
+      } else if (length > CONFIG.maxPromptLength * 0.9) {
+        charCounter.classList.add('warning');
+        charCounter.classList.remove('error');
+      } else {
+        charCounter.classList.remove('warning', 'error');
+      }
+    });
+
+    // ========================================
+    // MOSTRAR INTENTOS RESTANTES
+    // ========================================
+    usernameInput.addEventListener('blur', () => {
+      const username = sanitizeInput(usernameInput.value);
+      if (username) {
+        const remaining = rateLimiter.getRemainingAttempts(username);
+        rateLimitInfo.textContent = `Intentos restantes: ${remaining} / ${CONFIG.maxAttemptsPerWindow}`;
+        rateLimitInfo.style.color = remaining === 0 ? '#f44336' : '#888';
+      }
+    });
+
+    // ========================================
+    // MANEJO DE PESTAÑAS
+    // ========================================
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
         tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -283,78 +470,114 @@
       });
     });
 
-    // Submit del formulario CON LOGGING DETALLADO
+    // ========================================
+    // SUBMIT DEL FORMULARIO CON SEGURIDAD
+    // ========================================
     promptForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const username = document.getElementById('username').value.trim();
-      const prompt = document.getElementById('prompt').value.trim();
-
-      console.log('=== INICIO DE ENVÍO ===');
-      console.log('Username:', username);
-      console.log('Prompt:', prompt);
-      console.log('URL:', makeWebhookUrl);
-
-      if (!username || !prompt) {
-        assistantReply.value = "Debes rellenar todos los campos.";
+      // Limpiar errores previos
+      usernameError.style.display = 'none';
+      promptError.style.display = 'none';
+      assistantReply.value = '';
+      
+      // Obtener y sanitizar inputs
+      const username = sanitizeInput(usernameInput.value);
+      const prompt = sanitizeInput(promptInput.value);
+      
+      // Validar username
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.valid) {
+        usernameError.textContent = usernameValidation.error;
+        usernameError.style.display = 'block';
         return;
       }
-
+      
+      // Validar prompt
+      const promptValidation = validatePrompt(prompt);
+      if (!promptValidation.valid) {
+        promptError.textContent = promptValidation.error;
+        promptError.style.display = 'block';
+        return;
+      }
+      
+      // Verificar rate limit
+      const rateLimitCheck = rateLimiter.check(username);
+      if (!rateLimitCheck.allowed) {
+        assistantReply.value = `⏱️ Has alcanzado el límite de intentos.\n\nEspera ${rateLimitCheck.minutesLeft} minuto(s) antes de intentar de nuevo.`;
+        return;
+      }
+      
+      // Actualizar intentos restantes
+      rateLimitInfo.textContent = `Intentos restantes: ${rateLimitCheck.remainingAttempts} / ${CONFIG.maxAttemptsPerWindow}`;
+      
+      // Deshabilitar botón y mostrar loading
       startButton.disabled = true;
-      startButton.innerHTML = "Espere... <span class='spinner'></span>";
-      assistantReply.value = "Procesando tu prompt...";
-
-      const payload = { 
-        username: username, 
-        prompt: prompt 
+      startButton.innerHTML = "Analizando... <span class='spinner'></span>";
+      assistantReply.value = "🤖 Procesando tu prompt con IA...\n\nEsto puede tardar hasta 30 segundos.";
+      
+      // Preparar payload
+      const payload = {
+        username: username,
+        prompt: prompt,
+        token: CONFIG.secretToken,
+        timestamp: Date.now()
       };
       
-      console.log('Payload a enviar:', JSON.stringify(payload, null, 2));
-
       try {
-        console.log('Iniciando fetch...');
+        // Fetch con timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.requestTimeout);
         
-        const response = await fetch(makeWebhookUrl, {
+        const response = await fetch(CONFIG.makeWebhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
+          signal: controller.signal
         });
-
-        console.log('Response status:', response.status);
-        console.log('Response statusText:', response.statusText);
-        console.log('Response headers:', [...response.headers.entries()]);
-
+        
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+          throw new Error(`Error del servidor: ${response.status}`);
         }
-
+        
         const responseText = await response.text();
-        console.log('Response text:', responseText);
         
-        assistantReply.value = responseText || "Respuesta recibida pero vacía";
-
+        if (!responseText || responseText.trim() === '') {
+          throw new Error('El servidor no devolvió ninguna respuesta');
+        }
+        
+        assistantReply.value = responseText;
+        
+        // Scroll al resultado
+        assistantReply.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
       } catch (error) {
-        console.error('=== ERROR COMPLETO ===');
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        assistantReply.value = `Error: ${error.message}`;
+        if (error.name === 'AbortError') {
+          assistantReply.value = "⏱️ Timeout: El servidor tardó demasiado en responder.\n\nPor favor, intenta de nuevo en unos momentos.";
+        } else if (error.message.includes('Failed to fetch')) {
+          assistantReply.value = "🔌 Error de conexión.\n\nVerifica tu conexión a internet e intenta de nuevo.";
+        } else {
+          assistantReply.value = `❌ Error: ${error.message}\n\nSi el problema persiste, contacta al administrador.`;
+        }
+        console.error('Error completo:', error);
       } finally {
         startButton.disabled = false;
         startButton.textContent = "Empezar";
-        console.log('=== FIN DE ENVÍO ===');
       }
     });
 
-    // Función para cargar leaderboard
+    // ========================================
+    // CARGAR LEADERBOARD
+    // ========================================
     function loadLeaderboardData() {
       const leaderboardBody = document.getElementById('leaderboardTableBody');
-      leaderboardBody.innerHTML = "";
+      leaderboardBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
 
-      fetch(publishedCsvUrl)
+      fetch(CONFIG.publishedCsvUrl)
         .then(response => {
           if (!response.ok) {
             throw new Error("No se pudo obtener la hoja en CSV");
@@ -365,18 +588,37 @@
           const lines = csvText.trim().split("\n");
           const records = [];
           
+          // Parsear CSV (saltando header)
           for (let i = 1; i < lines.length; i++) {
             const rowData = lines[i].split(",");
-            const puntos = parseInt(rowData[1], 10) || 0;
-            records.push({
-              nombre: rowData[0],
-              puntuacion: puntos
-            });
+            if (rowData.length >= 2) {
+              const nombre = rowData[0].trim();
+              const puntos = parseInt(rowData[1], 10) || 0;
+              
+              if (nombre && puntos > 0) {
+                records.push({
+                  nombre: sanitizeInput(nombre),
+                  puntuacion: puntos
+                });
+              }
+            }
           }
 
+          // Ordenar por puntuación
           records.sort((a, b) => b.puntuacion - a.puntuacion);
+          
+          // Top 100
           const topRecords = records.slice(0, 100);
+          
+          // Limpiar tabla
+          leaderboardBody.innerHTML = '';
+          
+          if (topRecords.length === 0) {
+            leaderboardBody.innerHTML = '<tr><td colspan="3">No hay datos disponibles</td></tr>';
+            return;
+          }
 
+          // Renderizar filas
           topRecords.forEach((item, index) => {
             const row = document.createElement('tr');
             
@@ -396,15 +638,20 @@
           });
         })
         .catch(error => {
-          console.error(error);
-          const errorRow = document.createElement('tr');
-          const errorCell = document.createElement('td');
-          errorCell.colSpan = 3;
-          errorCell.textContent = "No se pudo cargar el leaderboard";
-          errorRow.appendChild(errorCell);
-          leaderboardBody.appendChild(errorRow);
+          console.error('Error cargando leaderboard:', error);
+          leaderboardBody.innerHTML = '<tr><td colspan="3">Error al cargar el leaderboard</td></tr>';
         });
     }
+
+    // ========================================
+    // INICIALIZACIÓN
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Cargar leaderboard si estamos en esa pestaña
+      if (document.getElementById('tab-leaderboard').classList.contains('active')) {
+        loadLeaderboardData();
+      }
+    });
   </script>
 </body>
 </html>
