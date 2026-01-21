@@ -255,7 +255,7 @@
         <input type="text" id="username" name="username" maxlength="50" required>
         <div id="usernameError" class="error-message" style="display: none;"></div>
 
-        <label for="prompt">Prompt (10-2000 caracteres)</label>
+        <label for="prompt">Prompt (10-2500 caracteres)</label>
         <textarea id="prompt" name="prompt" rows="8" required></textarea>
         <div class="char-counter" id="charCounter">0 / 2000</div>
         <div id="promptError" class="error-message" style="display: none;"></div>
@@ -293,12 +293,12 @@
       makeWebhookUrl: "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in",
       publishedCsvUrl: "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0",
       secretToken: "a7f3e9d2c8b6f1a4e7d9c2b8f5a1e6d3c9b7f2a5e8d1c6b9f3a7e2d5c8b1f4a6e9d3c7b2f5a8e1d4c9b6f2a7e3d8c5b1f9a4e7d2c6b8f3a5e9d1c7b4f2a6e8d3c9",
-      maxPromptLength: 2000,
+      maxPromptLength: 2500,
       minPromptLength: 10,
       maxUsernameLength: 50,
       rateLimitWindow: 300000, // 5 minutos en ms
       maxAttemptsPerWindow: 3,
-      requestTimeout: 30000 // 30 segundos
+      requestTimeout: 60000 // 60 segundos
     };
 
     // ========================================
