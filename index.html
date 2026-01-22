@@ -174,7 +174,125 @@
         display: none;
       }
     }
-  </style>
+  
+
+/* =========================
+   MOBILE RESPONSIVE FIXES
+   Pegar al FINAL del <style>
+   ========================= */
+
+/* 1) Container: que use casi todo el ancho y menos padding */
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 1rem;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  /* 2) Inputs/textarea: más cómodos en móvil */
+  form input[type="text"],
+  form textarea {
+    font-size: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  #prompt, #assistantReply {
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+
+  /* 3) Botón full width, grande */
+  form button {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 1rem;
+  }
+
+  /* 4) Navbar: que no quede enorme ni raro */
+  .navbar ul {
+    display: flex !important;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .navbar li {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  /* 5) Leaderboard: convertir tabla a "cards" legibles */
+  .leaderboard-table {
+    width: 100%;
+  }
+
+  .leaderboard-table thead {
+    display: none; /* fuera headers */
+  }
+
+  .leaderboard-table,
+  .leaderboard-table tbody,
+  .leaderboard-table tr,
+  .leaderboard-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .leaderboard-table tr {
+    border: 1px solid #c77fdf;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: #151515;
+  }
+
+  .leaderboard-table td {
+    border: none !important;
+    padding: 0.35rem 0 !important;
+    text-align: left !important;
+    font-size: 0.75rem;
+  }
+
+  /* IMPORTANTE: aquí sí mostramos los labels */
+  .leaderboard-table td::before {
+    display: inline-block !important;
+    width: 10ch;
+    color: #c77fdf;
+    opacity: 0.9;
+    font-weight: bold;
+    margin-right: 0.5rem;
+  }
+
+  /* Labels por columna */
+  .leaderboard-table td:nth-child(1)::before { content: "Posición:"; }
+  .leaderboard-table td:nth-child(2)::before { content: "Nombre:"; }
+  .leaderboard-table td:nth-child(3)::before { content: "Puntos:"; }
+
+  /* 6) Contador de caracteres: que no se descuadre */
+  .char-counter {
+    font-size: 0.65rem;
+  }
+}
+
+/* 7) Extra: muy chico (iPhone SE etc) */
+@media (max-width: 380px) {
+  .header h1 { font-size: 1.2rem; }
+  .navbar li { font-size: 0.65rem; padding: 0.65rem 0.35rem; }
+  form input[type="text"], form textarea { font-size: 0.7rem; }
+}
+
+</style>
 </head>
 
 <body>
