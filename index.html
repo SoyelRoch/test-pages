@@ -5,233 +5,47 @@
   <title>Prompt Arena Retro</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .container { width: 80%; margin: 2rem auto; background: #111; padding: 2rem; border: 2px solid #c77fdf; box-shadow: 0 0 10px #c77fdf; font-family: 'Press Start 2P', monospace; color: #c77fdf; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 2.5rem; color: #c77fdf; text-shadow: 0 0 5px #c77fdf; }
+    .navbar ul { list-style: none; display: flex; justify-content: center; margin-bottom: 2rem; border-bottom: 2px dashed #c77fdf; }
+    .navbar li { padding: 1rem 2rem; cursor: pointer; transition: background 0.3s; }
+    .navbar li:hover { background: #222; }
+    .navbar li.active { background: #333; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    form { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 800px; margin: 0 auto; }
+    form label { font-weight: bold; font-size: 1rem; }
+    #prompt { rows: 8; width: 100%; }
+    #assistantReply { rows: 16; width: 100%; }
+    form input[type="text"], form textarea { background: #222; color: #c77fdf; border: 1px solid #c77fdf; padding: 0.5rem; font-family: inherit; }
+    #assistantReply:disabled { background: #222 !important; color: #c77fdf !important; border: 1px solid #c77fdf !important; opacity: 1; }
+    form button { background: #c77fdf; color: #111; border: none; padding: 0.75rem; cursor: pointer; font-family: inherit; font-size: 1rem; text-transform: uppercase; transition: background 0.3s, color 0.3s; }
+    form button:hover { background: #fff; color: #000; }
+    form button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .leaderboard-table { width: 80%; margin: 1rem auto; border-collapse: collapse; color: #fff; text-align: center; }
+    .leaderboard-table th, .leaderboard-table td { border: 1px solid #c77fdf; padding: 0.5rem; }
+    .spinner { display: inline-block; margin-left: 8px; width: 14px; height: 14px; border: 2px solid #111; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .char-counter { text-align: right; font-size: 0.8rem; color: #888; margin-top: -0.5rem; }
+    .char-counter.warning { color: #ff9800; }
+    .char-counter.error { color: #f44336; }
+    .error-message { color: #f44336; font-size: 0.9rem; margin-top: -0.5rem; }
+    body { background: black !important; }
+    p { font-family: Poppins !important; }
 
-    .container {
-      width: 80%;
-      margin: 2rem auto;
-      background: #111;
-      padding: 2rem;
-      border: 2px solid #c77fdf;
-      box-shadow: 0 0 10px #c77fdf;
-      font-family: 'Press Start 2P', monospace;
-      color: #c77fdf;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .header h1 {
-      font-size: 2.5rem;
-      color: #c77fdf;
-      text-shadow: 0 0 5px #c77fdf;
-    }
-
-    .navbar ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 2rem;
-      border-bottom: 2px dashed #c77fdf;
-    }
-
-    .navbar li {
-      padding: 1rem 2rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .navbar li:hover {
-      background: #222;
-    }
-
-    .navbar li.active {
-      background: #333;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    form label {
-      font-weight: bold;
-      font-size: 1rem;
-    }
-
-    #prompt {
-      rows: 8;
-      width: 100%;
-    }
-
-    #assistantReply {
-      rows: 16;
-      width: 100%;
-    }
-
-    form input[type="text"],
-    form textarea {
-      background: #222;
-      color: #c77fdf;
-      border: 1px solid #c77fdf;
-      padding: 0.5rem;
-      font-family: inherit;
-    }
-
-    #assistantReply:disabled {
-      background: #222 !important;
-      color: #c77fdf !important;
-      border: 1px solid #c77fdf !important;
-      opacity: 1;
-    }
-
-    form button {
-      background: #c77fdf;
-      color: #111;
-      border: none;
-      padding: 0.75rem;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 1rem;
-      text-transform: uppercase;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    form button:hover {
-      background: #fff;
-      color: #000;
-    }
-
-    form button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .leaderboard-table {
-      width: 80%;
-      margin: 1rem auto;
-      border-collapse: collapse;
-      color: #fff;
-      text-align: center;
-    }
-
-    .leaderboard-table th,
-    .leaderboard-table td {
-      border: 1px solid #c77fdf;
-      padding: 0.5rem;
-    }
-
-    .spinner {
-      display: inline-block;
-      margin-left: 8px;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #111;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle;
-    }
-    
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .char-counter {
-      text-align: right;
-      font-size: 0.8rem;
-      color: #888;
-      margin-top: -0.5rem;
-    }
-
-    .char-counter.warning {
-      color: #ff9800;
-    }
-
-    .char-counter.error {
-      color: #f44336;
-    }
-
-    .error-message {
-      color: #f44336;
-      font-size: 0.9rem;
-      margin-top: -0.5rem;
-    }
-
-    body {
-      background: black !important;
-    }
-    
-    p {
-      font-family: Poppins !important;
-    }
-    
     @media (max-width: 768px) {
-      #assistantReply:disabled, #prompt{
-        line-height: 1.5;
-      }
-      .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-        display: flex;
-      }
-      .navbar ul {
-        display: block !important;
-        width: 100%;
-        text-align: center !important;
-      }
+      #assistantReply:disabled, #prompt { line-height: 1.5; }
+      .navbar { flex-direction: column; align-items: flex-start; display: flex; }
+      .navbar ul { display: block !important; width: 100%; text-align: center !important; }
     }
-    
     @media (max-width: 768px) {
-      .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table th, .leaderboard-table td {
-        display: block;
-        width: 100%;
-      }
-      .leaderboard-table tr {
-        margin-bottom: 1rem;
-      }
-      .leaderboard-table th {
-        display: block;
-        text-align: left;
-        padding: 8px 0;
-        font-weight: bold;
-        color: #fff;
-        border: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      }
-      .leaderboard-table td {
-        text-align: left;
-        padding: 8px 0;
-        position: relative;
-        border: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      }
-      .leaderboard-table td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        text-transform: uppercase;
-        display: none;
-      }
+      .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table th, .leaderboard-table td { display: block; width: 100%; }
+      .leaderboard-table tr { margin-bottom: 1rem; }
+      .leaderboard-table th { display: block; text-align: left; padding: 8px 0; font-weight: bold; color: #fff; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+      .leaderboard-table td { text-align: left; padding: 8px 0; position: relative; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+      .leaderboard-table td::before { content: attr(data-label); font-weight: bold; text-transform: uppercase; display: none; }
     }
   </style>
 </head>
@@ -257,7 +71,7 @@
 
         <label for="prompt">Prompt (10-2500 caracteres)</label>
         <textarea id="prompt" name="prompt" rows="8" required></textarea>
-        <div class="char-counter" id="charCounter">0 / 2000</div>
+        <div class="char-counter" id="charCounter">0 / 2500</div>
         <div id="promptError" class="error-message" style="display: none;"></div>
 
         <label for="assistantReply">Respuesta</label>
@@ -279,8 +93,7 @@
             <th>Puntuación</th>
           </tr>
         </thead>
-        <tbody id="leaderboardTableBody">
-        </tbody>
+        <tbody id="leaderboardTableBody"></tbody>
       </table>
     </section>
   </div>
@@ -291,15 +104,41 @@
     // ========================================
     const CONFIG = {
       makeWebhookUrl: "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in",
+
+      // IMPORTANTE: Ajusta tu Google Sheet para que el CSV tenga columnas:
+      // userId,username,score,(opcional updatedAt)
+      // y actualiza el gid si cambias de pestaña.
       publishedCsvUrl: "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0",
-      secretToken: "a7f3e9d2c8b6f1a4e7d9c2b8f5a1e6d3c9b7f2a5e8d1c6b9f3a7e2d5c8b1f4a6e9d3c7b2f5a8e1d4c9b6f2a7e3d8c5b1f9a4e7d2c6b8f3a5e9d1c7b4f2a6e8d3c9",
+
       maxPromptLength: 2500,
       minPromptLength: 10,
       maxUsernameLength: 50,
-      rateLimitWindow: 300000, // 5 minutos en ms
+
+      rateLimitWindow: 300000, // 5 min
       maxAttemptsPerWindow: 3,
-      requestTimeout: 60000 // 60 segundos
+
+      requestTimeout: 60000 // 60s
     };
+
+    // ========================================
+    // USER ID ÚNICO (NO DEPENDE DEL USERNAME)
+    // ========================================
+    function getOrCreateUserId() {
+      const key = "promptArenaUserId";
+      let id = localStorage.getItem(key);
+      if (!id) {
+        // UUID v4 (sin libs)
+        id = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+          const r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15) >> 0;
+          const v = c === "x" ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+        localStorage.setItem(key, id);
+      }
+      return id;
+    }
+
+    const USER_ID = getOrCreateUserId();
 
     // ========================================
     // ELEMENTOS DEL DOM
@@ -317,63 +156,49 @@
     const rateLimitInfo = document.getElementById('rateLimitInfo');
 
     // ========================================
-    // RATE LIMITER
+    // RATE LIMITER (POR userId, NO POR username)
     // ========================================
     const rateLimiter = {
       attempts: JSON.parse(localStorage.getItem('rateLimiterAttempts') || '{}'),
-      
+
       saveToStorage() {
         localStorage.setItem('rateLimiterAttempts', JSON.stringify(this.attempts));
       },
-      
-      check(username) {
+
+      check(userId) {
         const now = Date.now();
-        const key = username.toLowerCase();
-        
-        if (!this.attempts[key]) {
-          this.attempts[key] = [];
-        }
-        
-        // Limpiar intentos antiguos
+        const key = String(userId);
+
+        if (!this.attempts[key]) this.attempts[key] = [];
+
         this.attempts[key] = this.attempts[key].filter(
           time => now - time < CONFIG.rateLimitWindow
         );
-        
-        // Verificar límite
+
         if (this.attempts[key].length >= CONFIG.maxAttemptsPerWindow) {
           const oldestAttempt = Math.min(...this.attempts[key]);
           const timeUntilReset = CONFIG.rateLimitWindow - (now - oldestAttempt);
           const minutesLeft = Math.ceil(timeUntilReset / 60000);
-          return { 
-            allowed: false, 
-            minutesLeft: minutesLeft 
-          };
+          return { allowed: false, minutesLeft };
         }
-        
-        // Registrar intento
+
         this.attempts[key].push(now);
         this.saveToStorage();
-        
+
         const remainingAttempts = CONFIG.maxAttemptsPerWindow - this.attempts[key].length;
-        return { 
-          allowed: true, 
-          remainingAttempts: remainingAttempts 
-        };
+        return { allowed: true, remainingAttempts };
       },
-      
-      getRemainingAttempts(username) {
-        const key = username.toLowerCase();
+
+      getRemainingAttempts(userId) {
+        const key = String(userId);
         const now = Date.now();
-        
-        if (!this.attempts[key]) {
-          return CONFIG.maxAttemptsPerWindow;
-        }
-        
-        // Limpiar intentos antiguos
+
+        if (!this.attempts[key]) return CONFIG.maxAttemptsPerWindow;
+
         this.attempts[key] = this.attempts[key].filter(
           time => now - time < CONFIG.rateLimitWindow
         );
-        
+
         return Math.max(0, CONFIG.maxAttemptsPerWindow - this.attempts[key].length);
       }
     };
@@ -382,9 +207,7 @@
     // SANITIZACIÓN
     // ========================================
     function sanitizeInput(input) {
-      // Remover HTML tags
       let sanitized = input.replace(/<[^>]*>/g, '');
-      // Remover caracteres de control
       sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
       return sanitized.trim();
     }
@@ -393,28 +216,16 @@
     // VALIDACIÓN
     // ========================================
     function validateUsername(username) {
-      if (!username || username.length === 0) {
-        return { valid: false, error: "El nombre de usuario es obligatorio" };
-      }
-      if (username.length > CONFIG.maxUsernameLength) {
-        return { valid: false, error: `El nombre es demasiado largo (máx ${CONFIG.maxUsernameLength} caracteres)` };
-      }
-      if (!/^[a-zA-Z0-9_\-\sáéíóúñÁÉÍÓÚÑ]+$/.test(username)) {
-        return { valid: false, error: "El nombre solo puede contener letras, números, guiones y espacios" };
-      }
+      if (!username) return { valid: false, error: "El nombre de usuario es obligatorio" };
+      if (username.length > CONFIG.maxUsernameLength) return { valid: false, error: `El nombre es demasiado largo (máx ${CONFIG.maxUsernameLength} caracteres)` };
+      if (!/^[a-zA-Z0-9_\-\sáéíóúñÁÉÍÓÚÑ]+$/.test(username)) return { valid: false, error: "El nombre solo puede contener letras, números, guiones y espacios" };
       return { valid: true };
     }
 
     function validatePrompt(prompt) {
-      if (!prompt || prompt.length === 0) {
-        return { valid: false, error: "El prompt es obligatorio" };
-      }
-      if (prompt.length < CONFIG.minPromptLength) {
-        return { valid: false, error: `El prompt debe tener al menos ${CONFIG.minPromptLength} caracteres` };
-      }
-      if (prompt.length > CONFIG.maxPromptLength) {
-        return { valid: false, error: `El prompt es demasiado largo (máx ${CONFIG.maxPromptLength} caracteres)` };
-      }
+      if (!prompt) return { valid: false, error: "El prompt es obligatorio" };
+      if (prompt.length < CONFIG.minPromptLength) return { valid: false, error: `El prompt debe tener al menos ${CONFIG.minPromptLength} caracteres` };
+      if (prompt.length > CONFIG.maxPromptLength) return { valid: false, error: `El prompt es demasiado largo (máx ${CONFIG.maxPromptLength} caracteres)` };
       return { valid: true };
     }
 
@@ -424,7 +235,7 @@
     promptInput.addEventListener('input', () => {
       const length = promptInput.value.length;
       charCounter.textContent = `${length} / ${CONFIG.maxPromptLength}`;
-      
+
       if (length > CONFIG.maxPromptLength) {
         charCounter.classList.add('error');
         charCounter.classList.remove('warning');
@@ -437,15 +248,12 @@
     });
 
     // ========================================
-    // MOSTRAR INTENTOS RESTANTES
+    // MOSTRAR INTENTOS RESTANTES (por userId)
     // ========================================
     usernameInput.addEventListener('blur', () => {
-      const username = sanitizeInput(usernameInput.value);
-      if (username) {
-        const remaining = rateLimiter.getRemainingAttempts(username);
-        rateLimitInfo.textContent = `Intentos restantes: ${remaining} / ${CONFIG.maxAttemptsPerWindow}`;
-        rateLimitInfo.style.color = remaining === 0 ? '#f44336' : '#888';
-      }
+      const remaining = rateLimiter.getRemainingAttempts(USER_ID);
+      rateLimitInfo.textContent = `Intentos restantes: ${remaining} / ${CONFIG.maxAttemptsPerWindow}`;
+      rateLimitInfo.style.color = remaining === 0 ? '#f44336' : '#888';
     });
 
     // ========================================
@@ -459,109 +267,90 @@
         const tabTarget = button.getAttribute('data-tab');
         tabContents.forEach(content => {
           content.classList.remove('active');
-          if (content.id === tabTarget) {
-            content.classList.add('active');
-          }
+          if (content.id === tabTarget) content.classList.add('active');
         });
 
-        if (tabTarget === 'tab-leaderboard') {
-          loadLeaderboardData();
-        }
+        if (tabTarget === 'tab-leaderboard') loadLeaderboardData();
       });
     });
 
     // ========================================
-    // SUBMIT DEL FORMULARIO CON SEGURIDAD
+    // SUBMIT DEL FORMULARIO
     // ========================================
     promptForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      // Limpiar errores previos
+
       usernameError.style.display = 'none';
       promptError.style.display = 'none';
       assistantReply.value = '';
-      
-      // Obtener y sanitizar inputs
+
       const username = sanitizeInput(usernameInput.value);
       const prompt = sanitizeInput(promptInput.value);
-      
-      // Validar username
+
       const usernameValidation = validateUsername(username);
       if (!usernameValidation.valid) {
         usernameError.textContent = usernameValidation.error;
         usernameError.style.display = 'block';
         return;
       }
-      
-      // Validar prompt
+
       const promptValidation = validatePrompt(prompt);
       if (!promptValidation.valid) {
         promptError.textContent = promptValidation.error;
         promptError.style.display = 'block';
         return;
       }
-      
-      // Verificar rate limit
-      const rateLimitCheck = rateLimiter.check(username);
+
+      // Rate limit por userId (no colisiona por nombre)
+      const rateLimitCheck = rateLimiter.check(USER_ID);
       if (!rateLimitCheck.allowed) {
-        assistantReply.value = `⏱️ Has alcanzado el límite de intentos.\n\nEspera ${rateLimitCheck.minutesLeft} minuto(s) antes de intentar de nuevo.`;
+        assistantReply.value = `Has alcanzado el límite de intentos.\nEspera ${rateLimitCheck.minutesLeft} minuto(s) e intenta de nuevo.`;
         return;
       }
-      
-      // Actualizar intentos restantes
+
       rateLimitInfo.textContent = `Intentos restantes: ${rateLimitCheck.remainingAttempts} / ${CONFIG.maxAttemptsPerWindow}`;
-      
-      // Deshabilitar botón y mostrar loading
+      rateLimitInfo.style.color = rateLimitCheck.remainingAttempts === 0 ? '#f44336' : '#888';
+
       startButton.disabled = true;
       startButton.innerHTML = "Analizando... <span class='spinner'></span>";
-      assistantReply.value = "🤖 Procesando tu prompt con IA...\n\nEsto puede tardar hasta 30 segundos.";
-      
-      // Preparar payload
+      assistantReply.value = "Procesando tu prompt...\nPuede tardar hasta 30 segundos.";
+
+      // Payload: userId es la llave REAL
       const payload = {
+        userId: USER_ID,
         username: username,
         prompt: prompt,
-        token: CONFIG.secretToken,
         timestamp: Date.now()
       };
-      
+
       try {
-        // Fetch con timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), CONFIG.requestTimeout);
-        
+
         const response = await fetch(CONFIG.makeWebhookUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
-        
+
         clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`Error del servidor: ${response.status}`);
-        }
-        
+
+        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
         const responseText = await response.text();
-        
-        if (!responseText || responseText.trim() === '') {
-          throw new Error('El servidor no devolvió ninguna respuesta');
-        }
-        
+        if (!responseText || responseText.trim() === '') throw new Error('El servidor no devolvió ninguna respuesta');
+
         assistantReply.value = responseText;
-        
-        // Scroll al resultado
         assistantReply.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+
       } catch (error) {
         if (error.name === 'AbortError') {
-          assistantReply.value = "⏱️ Timeout: El servidor tardó demasiado en responder.\n\nPor favor, intenta de nuevo en unos momentos.";
-        } else if (error.message.includes('Failed to fetch')) {
-          assistantReply.value = "🔌 Error de conexión.\n\nVerifica tu conexión a internet e intenta de nuevo.";
+          assistantReply.value = "Timeout: el servidor tardó demasiado. Intenta de nuevo.";
+        } else if (String(error.message).includes('Failed to fetch')) {
+          assistantReply.value = "Error de conexión. Verifica internet e intenta de nuevo.";
         } else {
-          assistantReply.value = `❌ Error: ${error.message}\n\nSi el problema persiste, contacta al administrador.`;
+          assistantReply.value = `Error: ${error.message}`;
         }
         console.error('Error completo:', error);
       } finally {
@@ -571,57 +360,48 @@
     });
 
     // ========================================
-    // CARGAR LEADERBOARD
+    // CARGAR LEADERBOARD (CSV con userId,username,score)
     // ========================================
     function loadLeaderboardData() {
       const leaderboardBody = document.getElementById('leaderboardTableBody');
       leaderboardBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
 
       fetch(CONFIG.publishedCsvUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("No se pudo obtener la hoja en CSV");
-          }
-          return response.text();
+        .then(r => {
+          if (!r.ok) throw new Error("No se pudo obtener la hoja en CSV");
+          return r.text();
         })
         .then(csvText => {
           const lines = csvText.trim().split("\n");
           const records = [];
-          
-          // Parsear CSV (saltando header)
+
+          // Header esperado: userId,username,score,(opcional)
+          // Nota: este parser es simple; si metes comas en username, tendrás que usar un parser CSV real.
           for (let i = 1; i < lines.length; i++) {
             const rowData = lines[i].split(",");
-            if (rowData.length >= 2) {
-              const nombre = rowData[0].trim();
-              const puntos = parseInt(rowData[1], 10) || 0;
-              
-              if (nombre && puntos > 0) {
-                records.push({
-                  nombre: sanitizeInput(nombre),
-                  puntuacion: puntos
-                });
+            if (rowData.length >= 3) {
+              const userId = sanitizeInput(rowData[0] || "");
+              const nombre = sanitizeInput(rowData[1] || "");
+              const puntos = parseInt((rowData[2] || "").trim(), 10) || 0;
+
+              if (userId && nombre && puntos > 0) {
+                records.push({ userId, nombre, puntuacion: puntos });
               }
             }
           }
 
-          // Ordenar por puntuación
           records.sort((a, b) => b.puntuacion - a.puntuacion);
-          
-          // Top 100
           const topRecords = records.slice(0, 100);
-          
-          // Limpiar tabla
+
           leaderboardBody.innerHTML = '';
-          
           if (topRecords.length === 0) {
             leaderboardBody.innerHTML = '<tr><td colspan="3">No hay datos disponibles</td></tr>';
             return;
           }
 
-          // Renderizar filas
           topRecords.forEach((item, index) => {
             const row = document.createElement('tr');
-            
+
             const posCell = document.createElement('td');
             posCell.textContent = index + 1;
             row.appendChild(posCell);
@@ -637,21 +417,11 @@
             leaderboardBody.appendChild(row);
           });
         })
-        .catch(error => {
-          console.error('Error cargando leaderboard:', error);
+        .catch(err => {
+          console.error('Error cargando leaderboard:', err);
           leaderboardBody.innerHTML = '<tr><td colspan="3">Error al cargar el leaderboard</td></tr>';
         });
     }
-
-    // ========================================
-    // INICIALIZACIÓN
-    // ========================================
-    document.addEventListener('DOMContentLoaded', () => {
-      // Cargar leaderboard si estamos en esa pestaña
-      if (document.getElementById('tab-leaderboard').classList.contains('active')) {
-        loadLeaderboardData();
-      }
-    });
   </script>
 </body>
 </html>
