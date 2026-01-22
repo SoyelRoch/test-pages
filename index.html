@@ -6,32 +6,135 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    .container { width: 80%; margin: 2rem auto; background: #111; padding: 2rem; border: 2px solid #c77fdf; box-shadow: 0 0 10px #c77fdf; font-family: 'Press Start 2P', monospace; color: #c77fdf; }
+
+    .container {
+      width: 80%;
+      margin: 2rem auto;
+      background: #111;
+      padding: 2rem;
+      border: 2px solid #c77fdf;
+      box-shadow: 0 0 10px #c77fdf;
+      font-family: 'Press Start 2P', monospace;
+      color: #c77fdf;
+    }
+
     .header { text-align: center; margin-bottom: 2rem; }
-    .header h1 { font-size: 2.5rem; color: #c77fdf; text-shadow: 0 0 5px #c77fdf; }
-    .navbar ul { list-style: none; display: flex; justify-content: center; margin-bottom: 2rem; border-bottom: 2px dashed #c77fdf; }
-    .navbar li { padding: 1rem 2rem; cursor: pointer; transition: background 0.3s; }
+
+    .header h1 {
+      font-size: 2.5rem;
+      color: #c77fdf;
+      text-shadow: 0 0 5px #c77fdf;
+    }
+
+    .navbar ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px dashed #c77fdf;
+    }
+
+    .navbar li {
+      padding: 1rem 2rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
     .navbar li:hover { background: #222; }
     .navbar li.active { background: #333; }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    form { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 800px; margin: 0 auto; }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     form label { font-weight: bold; font-size: 1rem; }
+
     #prompt { rows: 8; width: 100%; }
     #assistantReply { rows: 16; width: 100%; }
-    form input[type="text"], form textarea { background: #222; color: #c77fdf; border: 1px solid #c77fdf; padding: 0.5rem; font-family: inherit; }
-    #assistantReply:disabled { background: #222 !important; color: #c77fdf !important; border: 1px solid #c77fdf !important; opacity: 1; }
-    form button { background: #c77fdf; color: #111; border: none; padding: 0.75rem; cursor: pointer; font-family: inherit; font-size: 1rem; text-transform: uppercase; transition: background 0.3s, color 0.3s; }
+
+    form input[type="text"],
+    form textarea {
+      background: #222;
+      color: #c77fdf;
+      border: 1px solid #c77fdf;
+      padding: 0.5rem;
+      font-family: inherit;
+    }
+
+    #assistantReply:disabled {
+      background: #222 !important;
+      color: #c77fdf !important;
+      border: 1px solid #c77fdf !important;
+      opacity: 1;
+    }
+
+    form button {
+      background: #c77fdf;
+      color: #111;
+      border: none;
+      padding: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1rem;
+      text-transform: uppercase;
+      transition: background 0.3s, color 0.3s;
+    }
+
     form button:hover { background: #fff; color: #000; }
     form button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .leaderboard-table { width: 80%; margin: 1rem auto; border-collapse: collapse; color: #fff; text-align: center; }
-    .leaderboard-table th, .leaderboard-table td { border: 1px solid #c77fdf; padding: 0.5rem; }
-    .spinner { display: inline-block; margin-left: 8px; width: 14px; height: 14px; border: 2px solid #111; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+
+    .leaderboard-table {
+      width: 80%;
+      margin: 1rem auto;
+      border-collapse: collapse;
+      color: #fff;
+      text-align: center;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+      border: 1px solid #c77fdf;
+      padding: 0.5rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      margin-left: 8px;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #111;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+
     @keyframes spin { to { transform: rotate(360deg); } }
-    .char-counter { text-align: right; font-size: 0.8rem; color: #888; margin-top: -0.5rem; }
+
+    .char-counter {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: -0.5rem;
+    }
+
     .char-counter.warning { color: #ff9800; }
     .char-counter.error { color: #f44336; }
-    .error-message { color: #f44336; font-size: 0.9rem; margin-top: -0.5rem; }
+
+    .error-message {
+      color: #f44336;
+      font-size: 0.9rem;
+      margin-top: -0.5rem;
+    }
+
     body { background: black !important; }
     p { font-family: Poppins !important; }
 
@@ -40,15 +143,40 @@
       .navbar { flex-direction: column; align-items: flex-start; display: flex; }
       .navbar ul { display: block !important; width: 100%; text-align: center !important; }
     }
+
     @media (max-width: 768px) {
-      .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table th, .leaderboard-table td { display: block; width: 100%; }
+      .leaderboard-table, .leaderboard-table thead, .leaderboard-table tbody,
+      .leaderboard-table tr, .leaderboard-table th, .leaderboard-table td {
+        display: block;
+        width: 100%;
+      }
       .leaderboard-table tr { margin-bottom: 1rem; }
-      .leaderboard-table th { display: block; text-align: left; padding: 8px 0; font-weight: bold; color: #fff; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
-      .leaderboard-table td { text-align: left; padding: 8px 0; position: relative; border: none; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
-      .leaderboard-table td::before { content: attr(data-label); font-weight: bold; text-transform: uppercase; display: none; }
+      .leaderboard-table th {
+        display: block;
+        text-align: left;
+        padding: 8px 0;
+        font-weight: bold;
+        color: #fff;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .leaderboard-table td {
+        text-align: left;
+        padding: 8px 0;
+        position: relative;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .leaderboard-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-transform: uppercase;
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <header class="header">
@@ -104,32 +232,30 @@
     // ========================================
     const CONFIG = {
       makeWebhookUrl: "https://automatizaciones-n8n.emtgxo.easypanel.host/webhook/make-in",
-
-      // IMPORTANTE: Ajusta tu Google Sheet para que el CSV tenga columnas:
-      // userId,username,score,(opcional updatedAt)
-      // y actualiza el gid si cambias de pestaña.
+      // Mantengo tu CSV actual (2 columnas: Nombre,Puntuación)
       publishedCsvUrl: "https://docs.google.com/spreadsheets/d/1J4EFIh4kzGIf3jjnW8U7ouXtYCFVeOFRxGUugmQS-KU/export?format=csv&gid=0",
+
+      // IMPORTANTE: tu n8n hoy valida token -> lo volvemos a mandar
+      secretToken: "a7f3e9d2c8b6f1a4e7d9c2b8f5a1e6d3c9b7f2a5e8d1c6b9f3a7e2d5c8b1f4a6e9d3c7b2f5a8e1d4c9b6f2a7e3d8c5b1f9a4e7d2c6b8f3a5e9d1c7b4f2a6e8d3c9",
 
       maxPromptLength: 2500,
       minPromptLength: 10,
       maxUsernameLength: 50,
-
-      rateLimitWindow: 300000, // 5 min
+      rateLimitWindow: 300000, // 5 minutos
       maxAttemptsPerWindow: 3,
-
-      requestTimeout: 60000 // 60s
+      requestTimeout: 60000 // 60 segundos
     };
 
     // ========================================
-    // USER ID ÚNICO (NO DEPENDE DEL USERNAME)
+    // USER ID ÚNICO Y PERSISTENTE
     // ========================================
     function getOrCreateUserId() {
       const key = "promptArenaUserId";
       let id = localStorage.getItem(key);
       if (!id) {
-        // UUID v4 (sin libs)
+        // UUID v4 usando crypto (sin librerías)
         id = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-          const r = (crypto.getRandomValues(new Uint8Array(1))[0] & 15) >> 0;
+          const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
           const v = c === "x" ? r : (r & 0x3) | 0x8;
           return v.toString(16);
         });
@@ -137,7 +263,6 @@
       }
       return id;
     }
-
     const USER_ID = getOrCreateUserId();
 
     // ========================================
@@ -171,10 +296,12 @@
 
         if (!this.attempts[key]) this.attempts[key] = [];
 
+        // limpiar intentos antiguos
         this.attempts[key] = this.attempts[key].filter(
           time => now - time < CONFIG.rateLimitWindow
         );
 
+        // verificar límite
         if (this.attempts[key].length >= CONFIG.maxAttemptsPerWindow) {
           const oldestAttempt = Math.min(...this.attempts[key]);
           const timeUntilReset = CONFIG.rateLimitWindow - (now - oldestAttempt);
@@ -182,6 +309,7 @@
           return { allowed: false, minutesLeft };
         }
 
+        // registrar intento
         this.attempts[key].push(now);
         this.saveToStorage();
 
@@ -216,16 +344,28 @@
     // VALIDACIÓN
     // ========================================
     function validateUsername(username) {
-      if (!username) return { valid: false, error: "El nombre de usuario es obligatorio" };
-      if (username.length > CONFIG.maxUsernameLength) return { valid: false, error: `El nombre es demasiado largo (máx ${CONFIG.maxUsernameLength} caracteres)` };
-      if (!/^[a-zA-Z0-9_\-\sáéíóúñÁÉÍÓÚÑ]+$/.test(username)) return { valid: false, error: "El nombre solo puede contener letras, números, guiones y espacios" };
+      if (!username || username.length === 0) {
+        return { valid: false, error: "El nombre de usuario es obligatorio" };
+      }
+      if (username.length > CONFIG.maxUsernameLength) {
+        return { valid: false, error: `El nombre es demasiado largo (máx ${CONFIG.maxUsernameLength} caracteres)` };
+      }
+      if (!/^[a-zA-Z0-9_\-\sáéíóúñÁÉÍÓÚÑ]+$/.test(username)) {
+        return { valid: false, error: "El nombre solo puede contener letras, números, guiones y espacios" };
+      }
       return { valid: true };
     }
 
     function validatePrompt(prompt) {
-      if (!prompt) return { valid: false, error: "El prompt es obligatorio" };
-      if (prompt.length < CONFIG.minPromptLength) return { valid: false, error: `El prompt debe tener al menos ${CONFIG.minPromptLength} caracteres` };
-      if (prompt.length > CONFIG.maxPromptLength) return { valid: false, error: `El prompt es demasiado largo (máx ${CONFIG.maxPromptLength} caracteres)` };
+      if (!prompt || prompt.length === 0) {
+        return { valid: false, error: "El prompt es obligatorio" };
+      }
+      if (prompt.length < CONFIG.minPromptLength) {
+        return { valid: false, error: `El prompt debe tener al menos ${CONFIG.minPromptLength} caracteres` };
+      }
+      if (prompt.length > CONFIG.maxPromptLength) {
+        return { valid: false, error: `El prompt es demasiado largo (máx ${CONFIG.maxPromptLength} caracteres)` };
+      }
       return { valid: true };
     }
 
@@ -270,7 +410,9 @@
           if (content.id === tabTarget) content.classList.add('active');
         });
 
-        if (tabTarget === 'tab-leaderboard') loadLeaderboardData();
+        if (tabTarget === 'tab-leaderboard') {
+          loadLeaderboardData();
+        }
       });
     });
 
@@ -301,10 +443,10 @@
         return;
       }
 
-      // Rate limit por userId (no colisiona por nombre)
+      // Rate limit por userId
       const rateLimitCheck = rateLimiter.check(USER_ID);
       if (!rateLimitCheck.allowed) {
-        assistantReply.value = `Has alcanzado el límite de intentos.\nEspera ${rateLimitCheck.minutesLeft} minuto(s) e intenta de nuevo.`;
+        assistantReply.value = `Has alcanzado el límite de intentos.\n\nEspera ${rateLimitCheck.minutesLeft} minuto(s) antes de intentar de nuevo.`;
         return;
       }
 
@@ -313,13 +455,14 @@
 
       startButton.disabled = true;
       startButton.innerHTML = "Analizando... <span class='spinner'></span>";
-      assistantReply.value = "Procesando tu prompt...\nPuede tardar hasta 30 segundos.";
+      assistantReply.value = "Procesando tu prompt...\n\nEsto puede tardar hasta 30 segundos.";
 
-      // Payload: userId es la llave REAL
+      // Payload compatible con tu n8n actual (incluye token)
       const payload = {
-        userId: USER_ID,
-        username: username,
-        prompt: prompt,
+        userId: USER_ID,            // NUEVO: clave única (usa esto en n8n para no pisar por nombre)
+        username: username,         // display
+        prompt: prompt,             // prompt a evaluar
+        token: CONFIG.secretToken,  // compatibilidad con tu validación actual
         timestamp: Date.now()
       };
 
@@ -336,21 +479,25 @@
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Error del servidor: ${response.status}`);
+        }
 
         const responseText = await response.text();
-        if (!responseText || responseText.trim() === '') throw new Error('El servidor no devolvió ninguna respuesta');
+        if (!responseText || responseText.trim() === '') {
+          throw new Error('El servidor no devolvió ninguna respuesta');
+        }
 
         assistantReply.value = responseText;
         assistantReply.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
       } catch (error) {
         if (error.name === 'AbortError') {
-          assistantReply.value = "Timeout: el servidor tardó demasiado. Intenta de nuevo.";
+          assistantReply.value = "Timeout: El servidor tardó demasiado en responder.\n\nIntenta de nuevo en unos momentos.";
         } else if (String(error.message).includes('Failed to fetch')) {
-          assistantReply.value = "Error de conexión. Verifica internet e intenta de nuevo.";
+          assistantReply.value = "Error de conexión.\n\nVerifica tu conexión a internet e intenta de nuevo.";
         } else {
-          assistantReply.value = `Error: ${error.message}`;
+          assistantReply.value = `Error: ${error.message}\n\nSi el problema persiste, contacta al administrador.`;
         }
         console.error('Error completo:', error);
       } finally {
@@ -360,32 +507,33 @@
     });
 
     // ========================================
-    // CARGAR LEADERBOARD (CSV con userId,username,score)
+    // CARGAR LEADERBOARD (CSV actual: Nombre,Puntuación)
     // ========================================
     function loadLeaderboardData() {
       const leaderboardBody = document.getElementById('leaderboardTableBody');
       leaderboardBody.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
 
       fetch(CONFIG.publishedCsvUrl)
-        .then(r => {
-          if (!r.ok) throw new Error("No se pudo obtener la hoja en CSV");
-          return r.text();
+        .then(response => {
+          if (!response.ok) throw new Error("No se pudo obtener la hoja en CSV");
+          return response.text();
         })
         .then(csvText => {
           const lines = csvText.trim().split("\n");
           const records = [];
 
-          // Header esperado: userId,username,score,(opcional)
-          // Nota: este parser es simple; si metes comas en username, tendrás que usar un parser CSV real.
+          // Parse CSV simple (Nombre,Puntuación). OJO: si hay comas en el nombre, esto se rompe.
           for (let i = 1; i < lines.length; i++) {
             const rowData = lines[i].split(",");
-            if (rowData.length >= 3) {
-              const userId = sanitizeInput(rowData[0] || "");
-              const nombre = sanitizeInput(rowData[1] || "");
-              const puntos = parseInt((rowData[2] || "").trim(), 10) || 0;
+            if (rowData.length >= 2) {
+              const nombre = (rowData[0] || "").trim();
+              const puntos = parseInt((rowData[1] || "").trim(), 10) || 0;
 
-              if (userId && nombre && puntos > 0) {
-                records.push({ userId, nombre, puntuacion: puntos });
+              if (nombre && puntos > 0) {
+                records.push({
+                  nombre: sanitizeInput(nombre),
+                  puntuacion: puntos
+                });
               }
             }
           }
@@ -394,6 +542,7 @@
           const topRecords = records.slice(0, 100);
 
           leaderboardBody.innerHTML = '';
+
           if (topRecords.length === 0) {
             leaderboardBody.innerHTML = '<tr><td colspan="3">No hay datos disponibles</td></tr>';
             return;
@@ -417,8 +566,8 @@
             leaderboardBody.appendChild(row);
           });
         })
-        .catch(err => {
-          console.error('Error cargando leaderboard:', err);
+        .catch(error => {
+          console.error('Error cargando leaderboard:', error);
           leaderboardBody.innerHTML = '<tr><td colspan="3">Error al cargar el leaderboard</td></tr>';
         });
     }
